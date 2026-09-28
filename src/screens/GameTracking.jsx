@@ -91,12 +91,19 @@ export default function GameTracking({ players, games, setGames, onBack, onFinis
                 {players.map(p => (
                   <button
                     key={p.id}
-                    className={'chip' + (draft.participantIds.includes(p.id) ? ' selected' : '')}
+                    className={
+                      'chip'
+                      + (draft.participantIds.includes(p.id) ? ' selected' : '')
+                      + (draft.teamA.includes(p.id) ? ' team-a' : '')
+                      + (draft.teamB.includes(p.id) ? ' team-b' : '')
+                    }
                     onClick={() => toggleParticipant(p.id)}
                   >
                     <span style={{
                       width: 8, height: 8, borderRadius: 4,
-                      background: draft.participantIds.includes(p.id) ? 'var(--court-green)' : 'var(--border)'
+                      background: draft.teamA.includes(p.id)
+                        ? 'var(--team-pink)'
+                        : draft.teamB.includes(p.id) ? 'var(--team-purple)' : 'var(--border)'
                     }} />
                     {p.name}
                   </button>
@@ -106,19 +113,25 @@ export default function GameTracking({ players, games, setGames, onBack, onFinis
 
             <div className="score-card">
               <div className="score-side" style={{ gridTemplateColumns: '1fr' }}>
-                <div className="team-names">
-                  ทีม A: {draft.teamA.map(nameOf).join(' & ') || '—'}
+                <div className="team-names team-a">
+                  <span className="team-side-label team-a">ทีม A</span>{' '}
+                  {draft.teamA.map(nameOf).join(' & ') || '—'}
                 </div>
               </div>
               <div className="score-vs">VS</div>
-              <div className="team-names">
-                ทีม B: {draft.teamB.map(nameOf).join(' & ') || '—'}
+              <div className="team-names team-b">
+                <span className="team-side-label team-b">ทีม B</span>{' '}
+                {draft.teamB.map(nameOf).join(' & ') || '—'}
               </div>
 
               <div className="section-title" style={{ marginTop: 4 }}>แตะชื่อเพื่อสลับทีม</div>
               <div className="chip-grid">
                 {draft.participantIds.map(id => (
-                  <button key={id} className="chip selected" onClick={() => swapTeam(id)}>
+                  <button
+                    key={id}
+                    className={'chip selected ' + (draft.teamA.includes(id) ? 'team-a' : 'team-b')}
+                    onClick={() => swapTeam(id)}
+                  >
                     {nameOf(id)} · {draft.teamA.includes(id) ? 'ทีม A' : 'ทีม B'}
                   </button>
                 ))}
@@ -139,8 +152,8 @@ export default function GameTracking({ players, games, setGames, onBack, onFinis
             <button className="btn-text" onClick={() => setPhase('setup')}>← แก้ทีม</button>
 
             <div className="live-scoreboard">
-              <button className="score-panel" onClick={() => addPoint('a')}>
-                <div className="team-label">{draft.teamA.map(nameOf).join(' & ')}</div>
+              <button className="score-panel team-a" onClick={() => addPoint('a')}>
+                <div className="team-label">ทีม A · {draft.teamA.map(nameOf).join(' & ')}</div>
                 <div className="big-score">{score.a}</div>
                 <span
                   className="undo-btn"
@@ -152,8 +165,8 @@ export default function GameTracking({ players, games, setGames, onBack, onFinis
 
               <div className="score-vs">VS</div>
 
-              <button className="score-panel" onClick={() => addPoint('b')}>
-                <div className="team-label">{draft.teamB.map(nameOf).join(' & ')}</div>
+              <button className="score-panel team-b" onClick={() => addPoint('b')}>
+                <div className="team-label">ทีม B · {draft.teamB.map(nameOf).join(' & ')}</div>
                 <div className="big-score">{score.b}</div>
                 <span
                   className="undo-btn"
@@ -180,9 +193,11 @@ export default function GameTracking({ players, games, setGames, onBack, onFinis
               {games.map(g => (
                 <div className="completed-row" key={g.id}>
                   <span className="tag">
-                    ✓ Game {g.index}: {g.teamA.map(nameOf).join(' & ')} vs {g.teamB.map(nameOf).join(' & ')}
+                    {g.historical
+                      ? `Game ${g.index}: เกมเดิม (ไม่มีรายละเอียด)`
+                      : `✓ Game ${g.index}: ${g.teamA.map(nameOf).join(' & ')} vs ${g.teamB.map(nameOf).join(' & ')}`}
                   </span>
-                  <span className="result">{g.scoreA}–{g.scoreB}</span>
+                  {!g.historical && <span className="result">{g.scoreA}–{g.scoreB}</span>}
                 </div>
               ))}
             </div>

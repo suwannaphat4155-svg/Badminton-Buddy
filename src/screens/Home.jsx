@@ -2,7 +2,7 @@ import React from 'react'
 import BottomNav from '../components/BottomNav.jsx'
 import { RECENT_SESSIONS, LIFETIME_STATS } from '../data/mockData.js'
 
-export default function Home({ onStartSession, onSelectTab }) {
+export default function Home({ onStartSession, onSelectTab, recentSessions }) {
   return (
     <div className="screen">
       <div className="screen-body">
@@ -31,7 +31,7 @@ export default function Home({ onStartSession, onSelectTab }) {
           <div className="section-title">เซสชันล่าสุด</div>
         </div>
 
-        {RECENT_SESSIONS.map(s => (
+        {(recentSessions || RECENT_SESSIONS).map(s => (
           <div className="session-item" key={s.id}>
             <div>
               <div className="name">{s.name}</div>

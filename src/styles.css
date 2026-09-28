@@ -1,25 +1,31 @@
 /* =========================================================
    Badminton Buddy — Design tokens
-   Palette: court green / deep navy / chalk background
+  Palette: rose pink / plum purple / soft blush background
    Type: Sora (display) + Inter (body & numbers)
    ========================================================= */
 
 :root {
-  --court-green: #1f9d77;
-  --court-green-dark: #146854;
-  --court-green-tint: #e3f4ec;
-  --navy: #16324f;
-  --navy-tint: #e8eef4;
-  --bg: #f4f7f3;
+  --court-green: #d94f91;
+  --court-green-dark: #a72f6b;
+  --court-green-tint: #fde8f2;
+  --navy: #62417f;
+  --navy-tint: #f0e8f7;
+  --bg: #ffffff;
   --surface: #ffffff;
-  --surface-alt: #eff4ec;
-  --success: #2fae60;
-  --warning: #f2994a;
-  --warning-tint: #fdf0e4;
-  --ink: #152420;
-  --ink-muted: #5e6e67;
-  --border: #dee7dc;
-  --shuttle-cream: #fffcf6;
+  --surface-alt: #f8edf4;
+  --success: #438d77;
+  --warning: #d88948;
+  --warning-tint: #fbf0e5;
+  --ink: #302333;
+  --ink-muted: #786879;
+  --border: #eedde8;
+  --shuttle-cream: #fffafc;
+  --team-pink: #d94f91;
+  --team-pink-dark: #a72f6b;
+  --team-pink-tint: #fde8f2;
+  --team-purple: #7652a6;
+  --team-purple-dark: #573782;
+  --team-purple-tint: #f0e8fa;
 
   --radius-lg: 24px;
   --radius-md: 14px;
@@ -34,7 +40,7 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #dfe6dc;
+  background: #ffffff;
   font-family: var(--font-body);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -231,6 +237,8 @@ input, textarea {
   border-radius: var(--radius-md);
   padding: 14px 16px;
   display: flex;
+  flex-wrap: wrap;
+  gap: 10px 12px;
   align-items: center;
   justify-content: space-between;
 }
@@ -251,6 +259,29 @@ input, textarea {
   font-weight: 700;
   color: var(--court-green-dark);
   font-size: 15px;
+}
+
+.session-actions {
+  display: flex;
+  flex: 1 0 100%;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-actions button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--court-green-dark);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 8px 10px;
+}
+
+.session-actions button:last-child {
+  background: var(--court-green);
+  border-color: var(--court-green);
+  color: white;
 }
 
 /* ---------- Form fields ---------- */
@@ -505,6 +536,16 @@ input, textarea {
   border-color: var(--court-green);
 }
 
+.score-panel.team-a {
+  background: var(--team-pink-tint);
+  border-color: var(--team-pink);
+}
+
+.score-panel.team-b {
+  background: var(--team-purple-tint);
+  border-color: var(--team-purple);
+}
+
 .score-panel .team-label {
   font-size: 12.5px;
   font-weight: 600;
@@ -520,6 +561,43 @@ input, textarea {
   color: var(--court-green-dark);
   line-height: 1;
 }
+
+.score-panel.team-a .big-score { color: var(--team-pink-dark); }
+.score-panel.team-b .big-score { color: var(--team-purple-dark); }
+
+.team-names.team-a { color: var(--team-pink-dark); }
+.team-names.team-b { color: var(--team-purple-dark); }
+
+.chip.team-a {
+  border-color: var(--team-pink);
+  background: var(--team-pink-tint);
+  color: var(--team-pink-dark);
+}
+
+.chip.team-b {
+  border-color: var(--team-purple);
+  background: var(--team-purple-tint);
+  color: var(--team-purple-dark);
+}
+
+.team-side-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.team-side-label::before {
+  content: '';
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.team-side-label.team-a { color: var(--team-pink-dark); }
+.team-side-label.team-b { color: var(--team-purple-dark); }
 
 .undo-btn {
   position: absolute;

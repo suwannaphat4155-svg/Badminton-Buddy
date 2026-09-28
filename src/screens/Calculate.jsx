@@ -1,12 +1,13 @@
 import React from 'react'
 import TopBar from '../components/TopBar.jsx'
-import { computeSplit } from '../data/calc.js'
+import { computeSplit, formatBaht } from '../data/calc.js'
 
 export default function Calculate({ players, games, expenses, onBack, onNext }) {
   const shuttleTotal = (Number(expenses.shuttlePrice) || 0) * (Number(expenses.shuttleCount) || 0)
   const total = shuttleTotal + (Number(expenses.courtFee) || 0)
   const split = computeSplit(players, games, total)
-  const perSlot = total / (split.reduce((s, r) => s + r.count, 0) || 1)
+  const totalSlots = split.reduce((sum, row) => sum + row.count, 0)
+  const perGame = totalSlots > 0 ? total / totalSlots : (split[0]?.amount || 0)
 
   return (
     <div className="screen">
@@ -18,7 +19,7 @@ export default function Calculate({ players, games, expenses, onBack, onNext }) 
         </div>
 
         <div className="section-title">
-          หารตามจำนวนเกมที่เล่น (เกมละ ฿{perSlot.toFixed(2)}/คน)
+          หารตามจำนวนเกมที่ลง (฿{formatBaht(perGame)} / เกม-คน)
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -26,9 +27,9 @@ export default function Calculate({ players, games, expenses, onBack, onNext }) 
             <div className="split-row" key={player.id}>
               <div className="detail">
                 <div className="name">{player.name}</div>
-                <div className="calc">{count} games × ฿{perSlot.toFixed(2)}</div>
+                <div className="calc">{count} เกม × ฿{formatBaht(perGame)}</div>
               </div>
-              <div className="owed">฿{amount}</div>
+              <div className="owed">฿{formatBaht(amount)}</div>
             </div>
           ))}
         </div>

@@ -1,16 +1,21 @@
-// Splits the total cost proportionally to how many games each player played,
-// so someone who played more games covers a larger share.
+// Splits the total by player-game participation slots without assigning rounding remainder.
 export function computeSplit(players, games, total) {
-  const counts = players.map(p => ({
-    player: p,
-    count: games.filter(g => g.participantIds.includes(p.id)).length
+  const counts = players.map(player => ({
+    player,
+    count: games.filter(game => game.participantIds?.includes(player.id)).length
   }))
-  const totalSlots = counts.reduce((sum, c) => sum + c.count, 0) || 1
-  const perSlot = total / totalSlots
+  const totalSlots = counts.reduce((sum, entry) => sum + entry.count, 0)
+  const costPerSlot = totalSlots > 0
+    ? (Number(total) || 0) / totalSlots
+    : players.length > 0 ? (Number(total) || 0) / players.length : 0
 
   return counts.map(({ player, count }) => ({
     player,
     count,
-    amount: Math.round(perSlot * count)
+    amount: totalSlots > 0 ? costPerSlot * count : costPerSlot
   }))
+}
+
+export function formatBaht(amount) {
+  return (Number(amount) || 0).toFixed(2)
 }

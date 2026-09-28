@@ -3,7 +3,7 @@ import TopBar from '../components/TopBar.jsx'
 import PlayerAvatar from '../components/PlayerAvatar.jsx'
 import { colorForIndex } from '../data/mockData.js'
 
-export default function AddPlayers({ players, setPlayers, onBack, onNext }) {
+export default function AddPlayers({ players, setPlayers, onBack, onNext, isEditing, onSave }) {
   const [name, setName] = useState('')
 
   const addPlayer = () => {
@@ -45,8 +45,12 @@ export default function AddPlayers({ players, setPlayers, onBack, onNext }) {
         </div>
 
         <div style={{ flex: 1 }} />
-        <button className="btn-primary" disabled={players.length < 2} onClick={onNext}>
-          เริ่มเล่น
+        <button
+          className="btn-primary"
+          disabled={players.length < 2}
+          onClick={isEditing ? () => onSave(players) : onNext}
+        >
+          {isEditing ? 'บันทึกผู้เล่น' : 'เริ่มเล่น'}
         </button>
       </div>
     </div>

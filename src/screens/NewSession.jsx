@@ -1,12 +1,12 @@
 import React from 'react'
 import TopBar from '../components/TopBar.jsx'
 
-export default function NewSession({ session, setSession, onBack, onNext }) {
+export default function NewSession({ session, setSession, onBack, onNext, isEditing, onSave }) {
   const update = (key) => (e) => setSession({ ...session, [key]: e.target.value })
 
   return (
     <div className="screen">
-      <TopBar title="เริ่มเกมใหม่" onBack={onBack} />
+      <TopBar title={isEditing ? 'แก้ไขข้อมูลเซสชัน' : 'เริ่มเกมใหม่'} onBack={onBack} />
       <div className="screen-body">
         <div className="field">
           <label>วันที่</label>
@@ -35,7 +35,9 @@ export default function NewSession({ session, setSession, onBack, onNext }) {
         </div>
 
         <div style={{ flex: 1 }} />
-        <button className="btn-primary" onClick={onNext}>เพิ่มผู้เล่น</button>
+        <button className="btn-primary" onClick={isEditing ? () => onSave({ session }) : onNext}>
+          {isEditing ? 'บันทึกข้อมูล' : 'เพิ่มผู้เล่น'}
+        </button>
       </div>
     </div>
   )

@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 import TopBar from '../components/TopBar.jsx'
-import { computeSplit } from '../data/calc.js'
+import { computeSplit, formatBaht } from '../data/calc.js'
 
 export default function Bill({ session, players, games, expenses, onBack, onNext }) {
   const shuttleTotal = (Number(expenses.shuttlePrice) || 0) * (Number(expenses.shuttleCount) || 0)
@@ -23,6 +23,12 @@ export default function Bill({ session, players, games, expenses, onBack, onNext
   }
 
   const togglePaid = (id) => setPaid({ ...paid, [id]: !paid[id] })
+
+  const handleShare = () => onNext({
+    qrImage,
+    total,
+    summary: split.map(({ player, amount }) => `${player.name}: ฿${formatBaht(amount)}`).join('\n')
+  })
 
   return (
     <div className="screen">
@@ -90,7 +96,7 @@ export default function Bill({ session, players, games, expenses, onBack, onNext
           </div>
         </div>
 
-        <div className="section-title">ยอดที่แต่ละคนต้องจ่าย</div>
+        <div className="section-title">ยอดที่แต่ละคนต้องจ่าย (คิดตามเกมที่ลง)</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {split.map(({ player, count, amount }) => (
             <button
@@ -101,17 +107,17 @@ export default function Bill({ session, players, games, expenses, onBack, onNext
             >
               <div className="detail">
                 <div className="name">{player.name}</div>
-                <div className="calc">{count} games</div>
+                <div className="calc">{count} เกม · คิดตามจำนวนเกมที่ลง</div>
               </div>
               <div className="owed">
-                {paid[player.id] ? '✓ จ่ายแล้ว' : `฿${amount}`}
+                {paid[player.id] ? '✓ จ่ายแล้ว' : `฿${formatBaht(amount)}`}
               </div>
             </button>
           ))}
         </div>
 
         <div style={{ flex: 1 }} />
-        <button className="btn-primary" onClick={onNext}>แชร์บิล</button>
+        <button className="btn-primary" onClick={handleShare}>แชร์บิล</button>
       </div>
     </div>
   )
