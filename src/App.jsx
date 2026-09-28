@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { RECENT_SESSIONS, seedPlayers } from './data/mockData.js'
+import { supabase } from './data/supabase.js'
+import { deleteCloudSession, fetchCloudSessions, saveCloudSession, saveCloudSessions } from './data/cloudSessions.js'
 
 import Home from './screens/Home.jsx'
 import SessionsTab from './screens/SessionsTab.jsx'
@@ -13,6 +15,7 @@ import Expenses from './screens/Expenses.jsx'
 import Calculate from './screens/Calculate.jsx'
 import Bill from './screens/Bill.jsx'
 import ShareBill from './screens/ShareBill.jsx'
+import AuthScreen from './screens/AuthScreen.jsx'
 
 // Prototype flow:
 // home -> newSession -> addPlayers -> gameTracking -> summary
@@ -31,6 +34,10 @@ function readDraft() {
 }
 
 export default function App() {
+  const [authSession, setAuthSession] = useState(null)
+  const [authLoading, setAuthLoading] = useState(Boolean(supabase))
+  const [cloudLoading, setCloudLoading] = useState(false)
+  const [cloudMessage, setCloudMessage] = useState('')
   const [savedDraft] = useState(readDraft)
   const [screen, setScreen] = useState(savedDraft?.screen || 'home')
   const [activeSessionId, setActiveSessionId] = useState(savedDraft?.activeSessionId || null)
@@ -47,6 +54,74 @@ export default function App() {
     }
   })
   const [shareData, setShareData] = useState(null)
+
+  useEffect(() => {
+    if (!supabase) return undefined
+
+    let active = true
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setAuthSession(session)
+      setAuthLoading(false)
+    })
+
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return
+      if (error) setCloudMessage(error.message)
+      setAuthSession(data.session)
+      setAuthLoading(false)
+    }).catch(error => {
+      if (!active) return
+      setCloudMessage(error.message || 'เชื่อมต่อระบบล็อกอินไม่ได้')
+      setAuthLoading(false)
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
+  }, [])
+
+  useEffect(() => {
+    const userId = authSession?.user?.id
+    if (!supabase || !userId) return undefined
+
+    let active = true
+    const loadSessions = async () => {
+      setCloudLoading(true)
+      setCloudMessage('')
+      try {
+        const remoteSessions = await fetchCloudSessions(supabase, userId)
+        const migrationKey = `badminton-buddy-migrated-${userId}`
+        let localSessions = []
+        try {
+          const storedSessions = JSON.parse(localStorage.getItem('badminton-buddy-sessions'))
+          localSessions = Array.isArray(storedSessions) ? storedSessions : []
+        } catch {
+          localSessions = []
+        }
+
+        if (!localStorage.getItem(migrationKey) && localSessions.length) {
+          const remoteIds = new Set(remoteSessions.map(item => item.id))
+          const toMigrate = localSessions.filter(item => !remoteIds.has(item.id))
+          await saveCloudSessions(supabase, userId, toMigrate)
+          localStorage.setItem(migrationKey, 'true')
+        }
+
+        const sessions = await fetchCloudSessions(supabase, userId)
+        if (active) {
+          setRecentSessions(sessions)
+          localStorage.setItem('badminton-buddy-sessions', JSON.stringify(sessions))
+        }
+      } catch (error) {
+        if (active) setCloudMessage(`ซิงก์ข้อมูลออนไลน์ไม่สำเร็จ: ${error.message}`)
+      } finally {
+        if (active) setCloudLoading(false)
+      }
+    }
+
+    loadSessions()
+    return () => { active = false }
+  }, [authSession?.user?.id])
 
   useEffect(() => {
     if (screen === 'home') {
@@ -77,7 +152,7 @@ export default function App() {
 
   const handleTabSelect = (tab) => setScreen(tab)
 
-  const finishSession = () => {
+  const finishSession = async () => {
     const total = (Number(expenses.shuttlePrice) || 0) * (Number(expenses.shuttleCount) || 0) + (Number(expenses.courtFee) || 0)
     const completed = {
       id: activeSessionId || 's' + Date.now(),
@@ -91,6 +166,15 @@ export default function App() {
     const nextSessions = [completed, ...recentSessions.filter(item => item.id !== completed.id)].slice(0, 20)
     setRecentSessions(nextSessions)
     localStorage.setItem('badminton-buddy-sessions', JSON.stringify(nextSessions))
+    if (supabase && authSession?.user?.id) {
+      try {
+        await saveCloudSession(supabase, authSession.user.id, completed)
+        setCloudMessage('บันทึกเซสชันออนไลน์แล้ว')
+      } catch (error) {
+        setCloudMessage(`บันทึกออนไลน์ไม่สำเร็จ: ${error.message}`)
+        return
+      }
+    }
     localStorage.removeItem(DRAFT_KEY)
     setScreen('home')
   }
@@ -119,7 +203,7 @@ export default function App() {
     setScreen(targetScreen)
   }
 
-  const continueLegacySession = (saved) => {
+  const continueLegacySession = async (saved) => {
     if (saved.sessionData) {
       openSavedSession(saved)
       return
@@ -154,10 +238,17 @@ export default function App() {
     setExpenses(legacySessionData.expenses)
     setRecentSessions(updatedSessions)
     localStorage.setItem('badminton-buddy-sessions', JSON.stringify(updatedSessions))
+    if (supabase && authSession?.user?.id) {
+      try {
+        await saveCloudSession(supabase, authSession.user.id, migrated)
+      } catch (error) {
+        setCloudMessage(`อัปเดตข้อมูลออนไลน์ไม่สำเร็จ: ${error.message}`)
+      }
+    }
     setScreen('addPlayers')
   }
 
-  const saveSessionEdits = (updates = {}) => {
+  const saveSessionEdits = async (updates = {}) => {
     const updatedSession = updates.session || session
     const updatedPlayers = updates.players || players
     const updatedGames = updates.games || games
@@ -189,12 +280,55 @@ export default function App() {
     setExpenses(updatedExpenses)
     setRecentSessions(updatedSessions)
     localStorage.setItem('badminton-buddy-sessions', JSON.stringify(updatedSessions))
+    const updatedRecord = updatedSessions.find(saved => saved.id === activeSessionId)
+    if (supabase && authSession?.user?.id && updatedRecord) {
+      try {
+        await saveCloudSession(supabase, authSession.user.id, updatedRecord)
+        setCloudMessage('บันทึกการแก้ไขออนไลน์แล้ว')
+      } catch (error) {
+        setCloudMessage(`บันทึกออนไลน์ไม่สำเร็จ: ${error.message}`)
+        return
+      }
+    }
     setScreen('sessions')
   }
+
+  const deleteSession = async (saved) => {
+    if (!window.confirm(`ลบเซสชัน "${saved.name}" ใช่ไหม? การลบนี้ย้อนกลับไม่ได้`)) return
+
+    if (supabase && authSession?.user?.id) {
+      try {
+        await deleteCloudSession(supabase, authSession.user.id, saved.id)
+      } catch (error) {
+        setCloudMessage(`ลบข้อมูลออนไลน์ไม่สำเร็จ: ${error.message}`)
+        return
+      }
+    }
+
+    const updatedSessions = recentSessions.filter(item => item.id !== saved.id)
+    setRecentSessions(updatedSessions)
+    localStorage.setItem('badminton-buddy-sessions', JSON.stringify(updatedSessions))
+    setCloudMessage(supabase ? 'ลบเซสชันจากคลาวด์แล้ว' : 'ลบเซสชันออกจากอุปกรณ์แล้ว')
+  }
+
+  if (supabase && authLoading) {
+    return <div className="cloud-gate"><div className="auth-panel">กำลังตรวจสอบบัญชี...</div></div>
+  }
+
+  if (supabase && !authSession) return <AuthScreen supabase={supabase} />
 
   return (
     <div className="phone-frame">
       <div className="phone-notch" />
+      {supabase ? (
+        <div className="cloud-toolbar">
+          <span>{cloudLoading ? 'กำลังซิงก์ข้อมูล...' : `ออนไลน์: ${authSession.user.email}`}</span>
+          <button onClick={() => supabase.auth.signOut()}>ออก</button>
+        </div>
+      ) : (
+        <div className="cloud-notice">โหมดในเครื่อง: ตั้งค่า Supabase เพื่อเก็บข้อมูลออนไลน์</div>
+      )}
+      {cloudMessage && <div className="cloud-message">{cloudMessage}</div>}
 
       {screen === 'home' && (
         <Home
@@ -212,6 +346,7 @@ export default function App() {
           onContinueSession={continueLegacySession}
           onEditDetails={(saved) => editSavedSession(saved, 'newSession')}
           onEditPlayers={(saved) => editSavedSession(saved, 'addPlayers')}
+          onDeleteSession={deleteSession}
         />
       )}
       {screen === 'players' && <PlayersTab players={players} onSelectTab={handleTabSelect} />}

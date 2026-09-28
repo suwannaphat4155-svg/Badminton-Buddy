@@ -2,7 +2,7 @@ import React from 'react'
 import BottomNav from '../components/BottomNav.jsx'
 import { RECENT_SESSIONS } from '../data/mockData.js'
 
-export default function SessionsTab({ recentSessions, onSelectTab, onSelectSession, onContinueSession, onEditDetails, onEditPlayers }) {
+export default function SessionsTab({ recentSessions, onSelectTab, onSelectSession, onContinueSession, onEditDetails, onEditPlayers, onDeleteSession }) {
   return (
     <div className="screen">
       <div className="topbar"><h1>เซสชันทั้งหมด</h1></div>
@@ -24,9 +24,15 @@ export default function SessionsTab({ recentSessions, onSelectTab, onSelectSessi
               ) : (
                 <button onClick={() => onContinueSession?.(s)}>เพิ่มผู้เล่นเพื่อเล่นต่อ</button>
               )}
+              <button className="delete-session-btn" onClick={() => onDeleteSession?.(s)}>
+                ลบเซสชัน
+              </button>
             </div>
           </div>
         ))}
+        {(recentSessions || RECENT_SESSIONS).length === 0 && (
+          <div className="empty-note">ยังไม่มีเซสชันที่บันทึกไว้</div>
+        )}
       </div>
       <BottomNav active="sessions" onSelect={onSelectTab} />
     </div>
