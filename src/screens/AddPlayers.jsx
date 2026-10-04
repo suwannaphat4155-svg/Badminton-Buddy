@@ -3,7 +3,7 @@ import TopBar from '../components/TopBar.jsx'
 import PlayerAvatar from '../components/PlayerAvatar.jsx'
 import { colorForIndex } from '../data/mockData.js'
 
-export default function AddPlayers({ players, setPlayers, onBack, onNext, isEditing, onSave }) {
+export default function AddPlayers({ players, games = [], setPlayers, onBack, onNext, isEditing, onSave }) {
   const [name, setName] = useState('')
 
   const addPlayer = () => {
@@ -13,7 +13,11 @@ export default function AddPlayers({ players, setPlayers, onBack, onNext, isEdit
     setName('')
   }
 
-  const removePlayer = (id) => setPlayers(players.filter(p => p.id !== id))
+  const removePlayer = (id) => {
+    const affectedGames = games.filter(game => game.participantIds?.includes(id)).length
+    if (affectedGames && !window.confirm(`ผู้เล่นคนนี้อยู่ในบันทึก ${affectedGames} เกม หากลบ ชื่อจะถูกนำออกจากเกมเหล่านั้นด้วย ต้องการลบหรือไม่?`)) return
+    setPlayers(players.filter(p => p.id !== id))
+  }
 
   return (
     <div className="screen">

@@ -22,7 +22,7 @@ export default function NewSession({ session, setSession, onBack, onNext, isEdit
         </div>
         <div className="field">
           <label>จำนวนคอร์ต</label>
-          <input type="number" min="1" value={session.courts} onChange={update('courts')} />
+          <input type="number" min="1" step="1" value={session.courts} onChange={update('courts')} />
         </div>
         <div className="field">
           <label>หมายเหตุ</label>

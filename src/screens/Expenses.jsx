@@ -2,11 +2,19 @@ import React from 'react'
 import TopBar from '../components/TopBar.jsx'
 
 export default function Expenses({ expenses, setExpenses, onBack, onNext }) {
-  const shuttleTotal = (Number(expenses.shuttlePrice) || 0) * (Number(expenses.shuttleCount) || 0)
-  const courtFee = Number(expenses.courtFee) || 0
+  const shuttlePrice = Math.max(0, Number(expenses.shuttlePrice) || 0)
+  const shuttleCount = Math.max(0, Math.floor(Number(expenses.shuttleCount) || 0))
+  const shuttleTotal = shuttlePrice * shuttleCount
+  const courtFee = Math.max(0, Number(expenses.courtFee) || 0)
   const total = shuttleTotal + courtFee
 
-  const update = (key) => (e) => setExpenses({ ...expenses, [key]: e.target.value })
+  const update = (key) => (e) => {
+    const value = e.target.value
+    if (value === '') { setExpenses({ ...expenses, [key]: '' }); return }
+    const numericValue = Number(value)
+    if (!Number.isFinite(numericValue) || numericValue < 0) return
+    setExpenses({ ...expenses, [key]: key === 'shuttleCount' ? Math.floor(numericValue) : numericValue })
+  }
 
   return (
     <div className="screen">
@@ -17,7 +25,7 @@ export default function Expenses({ expenses, setExpenses, onBack, onNext }) {
             <label>ค่าสนาม</label>
             <div className="currency-field">
               <span className="prefix">฿</span>
-              <input type="number" value={expenses.courtFee} onChange={update('courtFee')} />
+              <input type="number" min="0" step="0.01" value={expenses.courtFee} onChange={update('courtFee')} />
             </div>
           </div>
 
@@ -25,7 +33,7 @@ export default function Expenses({ expenses, setExpenses, onBack, onNext }) {
             <label>ราคาลูกแบด</label>
             <div className="currency-field">
               <span className="prefix">฿</span>
-              <input type="number" value={expenses.shuttlePrice} onChange={update('shuttlePrice')} />
+              <input type="number" min="0" step="0.01" value={expenses.shuttlePrice} onChange={update('shuttlePrice')} />
               <span className="suffix">/ ลูก</span>
             </div>
           </div>
@@ -33,7 +41,7 @@ export default function Expenses({ expenses, setExpenses, onBack, onNext }) {
           <div className="field">
             <label>จำนวนลูกที่ใช้</label>
             <div className="currency-field">
-              <input type="number" value={expenses.shuttleCount} onChange={update('shuttleCount')} />
+              <input type="number" min="0" step="1" value={expenses.shuttleCount} onChange={update('shuttleCount')} />
               <span className="suffix">ลูก</span>
             </div>
           </div>

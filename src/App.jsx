@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import { RECENT_SESSIONS, seedPlayers } from './data/mockData.js'
 import { supabase } from './data/supabase.js'
 import { deleteCloudSession, fetchCloudSessions, saveCloudSession, saveCloudSessions } from './data/cloudSessions.js'
@@ -46,6 +46,7 @@ export default function App() {
   const [players, setPlayers] = useState(savedDraft?.players || seedPlayers())
   const [games, setGames] = useState(savedDraft?.games || [])
   const [expenses, setExpenses] = useState(savedDraft?.expenses || DEFAULT_EXPENSES)
+  const [trackingState, setTrackingState] = useState(savedDraft?.trackingState || null)
   const [recentSessions, setRecentSessions] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('badminton-buddy-sessions')) || RECENT_SESSIONS
@@ -136,9 +137,12 @@ export default function App() {
       players,
       games,
       expenses,
-      shareData
+      shareData,
+      trackingState
     }))
-  }, [screen, activeSessionId, session, players, games, expenses, shareData])
+  }, [screen, activeSessionId, session, players, games, expenses, shareData, trackingState])
+
+  const updateTrackingState = useCallback((nextState) => setTrackingState(nextState), [])
 
   const goHome = () => setScreen('home')
 
@@ -148,6 +152,7 @@ export default function App() {
     setPlayers(seedPlayers())
     setGames([])
     setExpenses(DEFAULT_EXPENSES)
+    setTrackingState(null)
   }
 
   const handleTabSelect = (tab) => setScreen(tab)
@@ -169,7 +174,7 @@ export default function App() {
     if (supabase && authSession?.user?.id) {
       try {
         await saveCloudSession(supabase, authSession.user.id, completed)
-        setCloudMessage('บันทึกเซสชันออนไลน์แล้ว')
+        setCloudMessage('บันทึกออนไลน์แล้ว')
       } catch (error) {
         setCloudMessage(`บันทึกออนไลน์ไม่สำเร็จ: ${error.message}`)
         return
@@ -181,6 +186,7 @@ export default function App() {
 
   const openSavedSession = (saved) => {
     if (!saved.sessionData) return
+    setTrackingState(null)
     setActiveSessionId(saved.id)
     setSession(saved.sessionData.session)
     setPlayers(saved.sessionData.players)
@@ -191,6 +197,7 @@ export default function App() {
 
   const editSavedSession = (saved, targetScreen) => {
     if (!saved.sessionData && targetScreen !== 'newSession') return
+    setTrackingState(null)
     setActiveSessionId(saved.id)
     setSession(saved.sessionData?.session || {
       ...DEFAULT_SESSION,
@@ -228,6 +235,7 @@ export default function App() {
       })),
       expenses: { courtFee: Number(saved.total) || 0, shuttlePrice: 0, shuttleCount: 0 }
     }
+    setTrackingState(null)
     const migrated = { ...saved, sessionData: legacySessionData }
     const updatedSessions = recentSessions.map(item => item.id === saved.id ? migrated : item)
 
@@ -318,8 +326,7 @@ export default function App() {
   if (supabase && !authSession) return <AuthScreen supabase={supabase} />
 
   return (
-    <div className="phone-frame">
-      <div className="phone-notch" />
+    <div className="app-shell">
       {supabase ? (
         <div className="cloud-toolbar">
           <span>{cloudLoading ? 'กำลังซิงก์ข้อมูล...' : `ออนไลน์: ${authSession.user.email}`}</span>
@@ -334,6 +341,7 @@ export default function App() {
         <Home
           onStartSession={() => { resetForNewSession(); setScreen('newSession') }}
           onSelectTab={handleTabSelect}
+          onSelectSession={openSavedSession}
           recentSessions={recentSessions}
         />
       )}
@@ -366,6 +374,7 @@ export default function App() {
       {screen === 'addPlayers' && (
         <AddPlayers
           players={players}
+          games={games}
           setPlayers={setPlayers}
           onBack={() => setScreen('newSession')}
           onNext={() => setScreen('gameTracking')}
@@ -388,6 +397,8 @@ export default function App() {
           players={players}
           games={games}
           setGames={setGames}
+          savedTrackingState={trackingState}
+          onTrackingStateChange={updateTrackingState}
           onBack={() => setScreen('addPlayers')}
           onFinishSession={() => setScreen('summary')}
         />

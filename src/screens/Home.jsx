@@ -1,8 +1,11 @@
 import React from 'react'
 import BottomNav from '../components/BottomNav.jsx'
-import { RECENT_SESSIONS, LIFETIME_STATS } from '../data/mockData.js'
+import { RECENT_SESSIONS } from '../data/mockData.js'
 
-export default function Home({ onStartSession, onSelectTab, recentSessions }) {
+export default function Home({ onStartSession, onSelectTab, onSelectSession, recentSessions }) {
+  const sessions = recentSessions || RECENT_SESSIONS
+  const totalSpend = sessions.reduce((sum, session) => sum + (Number(session.total) || 0), 0)
+
   return (
     <div className="screen">
       <div className="screen-body">
@@ -18,28 +21,40 @@ export default function Home({ onStartSession, onSelectTab, recentSessions }) {
 
         <div className="stat-row">
           <div className="stat-card">
-            <div className="value">{LIFETIME_STATS.totalSessions}</div>
+            <div className="value">{sessions.length}</div>
             <div className="label">ครั้งที่เล่นทั้งหมด</div>
           </div>
           <div className="stat-card">
-            <div className="value">฿{LIFETIME_STATS.lastTotal}</div>
-            <div className="label">ค่าใช้จ่ายล่าสุด</div>
+            <div className="value">฿{totalSpend}</div>
+            <div className="label">ค่าใช้จ่ายรวม</div>
           </div>
         </div>
 
         <div>
-          <div className="section-title">เซสชันล่าสุด</div>
+          <div className="section-heading-row">
+            <div className="section-title">เซสชันล่าสุด</div>
+            {sessions.length > 0 && <button className="text-btn" onClick={() => onSelectTab('sessions')}>ดูทั้งหมด</button>}
+          </div>
         </div>
 
-        {(recentSessions || RECENT_SESSIONS).map(s => (
-          <div className="session-item" key={s.id}>
+        {sessions.slice(0, 3).map(s => (
+          <button className="session-item session-item-button" key={s.id} onClick={() => onSelectSession?.(s)}>
             <div>
               <div className="name">{s.name}</div>
               <div className="meta">{s.date} · {s.players} Players · {s.games} Games</div>
             </div>
             <div className="amount">฿{s.total}</div>
-          </div>
+          </button>
         ))}
+
+        {sessions.length === 0 && (
+          <div className="empty-home">
+            <div className="empty-home-icon">🏸</div>
+            <div className="name">ยังไม่มีเซสชัน</div>
+            <div className="meta">สร้างเซสชันแรกเพื่อเริ่มบันทึกเกมและแชร์ค่าใช้จ่าย</div>
+            <button className="btn-secondary" onClick={onStartSession}>สร้างเซสชันแรก</button>
+          </div>
+        )}
       </div>
 
       <BottomNav active="home" onSelect={onSelectTab} />

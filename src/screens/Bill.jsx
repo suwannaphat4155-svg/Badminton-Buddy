@@ -46,14 +46,16 @@ export default function Bill({ session, players, games, expenses, onBack, onNext
             <div className="bill-section-label">Session Summary</div>
             <div className="line-item"><span>Players</span><span>{players.length}</span></div>
             <div className="line-item"><span>Games</span><span>{games.length}</span></div>
+            <div className="line-item"><span>Courts</span><span>{session.courts || 1}</span></div>
+            {session.notes?.trim() && <div className="line-item"><span>Notes</span><span>{session.notes}</span></div>}
 
             <div className="bill-section-label">Expenses</div>
-            <div className="line-item"><span>Court Fee</span><span>฿{courtFee}</span></div>
-            <div className="line-item"><span>Badminton Shuttle</span><span>฿{shuttleTotal}</span></div>
-            <div className="line-item total"><span>Total</span><span>฿{total}</span></div>
+            <div className="line-item"><span>Court Fee</span><span>฿{formatBaht(courtFee)}</span></div>
+            <div className="line-item"><span>Badminton Shuttle</span><span>฿{formatBaht(shuttleTotal)}</span></div>
+            <div className="line-item total"><span>Total</span><span>฿{formatBaht(total)}</span></div>
 
             <div className="bill-grand-total">
-              <div className="value">TOTAL ฿{total}</div>
+              <div className="value">TOTAL ฿{formatBaht(total)}</div>
             </div>
           </div>
         </div>
@@ -97,22 +99,25 @@ export default function Bill({ session, players, games, expenses, onBack, onNext
         </div>
 
         <div className="section-title">ยอดที่แต่ละคนต้องจ่าย (คิดตามเกมที่ลง)</div>
+        <div className="empty-note payment-help">แตะปุ่มเมื่อได้รับเงินจากผู้เล่นคนนั้นแล้ว</div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {split.map(({ player, count, amount }) => (
-            <button
+            <div
               key={player.id}
               className="split-row"
               style={{ width: '100%', textAlign: 'left', background: 'var(--surface)', font: 'inherit' }}
-              onClick={() => togglePaid(player.id)}
             >
               <div className="detail">
                 <div className="name">{player.name}</div>
                 <div className="calc">{count} เกม · คิดตามจำนวนเกมที่ลง</div>
               </div>
-              <div className="owed">
-                {paid[player.id] ? '✓ จ่ายแล้ว' : `฿${formatBaht(amount)}`}
+              <div className="payment-status">
+                <div className="owed">฿{formatBaht(amount)}</div>
+                <button type="button" className={'paid-toggle' + (paid[player.id] ? ' is-paid' : '')} aria-pressed={Boolean(paid[player.id])} onClick={() => togglePaid(player.id)}>
+                  {paid[player.id] ? 'จ่ายแล้ว ✓' : 'ทำเครื่องหมายว่าจ่ายแล้ว'}
+                </button>
               </div>
-            </button>
+            </div>
           ))}
         </div>
 
