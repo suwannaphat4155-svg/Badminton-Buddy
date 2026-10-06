@@ -10,8 +10,10 @@ export default function Home({ onStartSession, onSelectTab, onSelectSession, rec
     <div className="screen">
       <div className="screen-body">
         <div className="hero">
+          <div className="hero-court-lines" aria-hidden="true" />
+          <div className="hero-shuttle" aria-hidden="true">✦</div>
           <div className="hero-content">
-            <div className="hero-eyebrow">Badminton Buddy</div>
+            <div className="hero-eyebrow">BADMINTON BUDDY <span>• MATCH DAY</span></div>
             <h2>ใครมาตีแบดกับคุณวันนี้?</h2>
             <button className="btn-hero" onClick={onStartSession}>
               เริ่มเล่นวันนี้ →
@@ -19,9 +21,11 @@ export default function Home({ onStartSession, onSelectTab, onSelectSession, rec
           </div>
         </div>
 
+        <div className="section-kicker"><span>SEASON STATS</span><i /></div>
         <div className="stat-row">
           <div className="stat-card">
-            <div className="value">{sessions.length}</div>
+            <div className="stat-index">01</div>
+            <div className="value">{String(sessions.length).padStart(2, '0')}</div>
             <div className="label">ครั้งที่เล่นทั้งหมด</div>
           </div>
           <div className="stat-card">
