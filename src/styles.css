@@ -980,6 +980,7 @@ input, textarea {
   border-radius: var(--radius-lg);
   overflow: hidden;
   border: 1px solid var(--border);
+  box-shadow: 0 12px 30px rgba(28, 55, 46, 0.08);
 }
 
 .bill-header {
@@ -1013,7 +1014,15 @@ input, textarea {
   margin-top: -1px;
 }
 
-.bill-body { padding: 4px 22px 22px; display: flex; flex-direction: column; gap: 14px; }
+.bill-body {
+  padding: 4px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background-color: var(--surface);
+  background-image: radial-gradient(rgba(49, 108, 83, 0.07) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
 
 .bill-section-label {
   font-size: 12px;
@@ -1075,11 +1084,12 @@ input, textarea {
 }
 
 .qr-box {
-  width: 180px;
-  height: 180px;
+  width: 220px;
+  height: 220px;
   border-radius: var(--radius-md);
   background: repeating-conic-gradient(var(--navy) 0% 25%, white 0% 50%) 0 0 / 20px 20px;
-  border: 1px solid var(--border);
+  border: 5px solid white;
+  box-shadow: 0 4px 16px rgba(28, 55, 46, 0.14);
 }
 
 .qr-recipient { font-weight: 700; font-size: 15px; margin-top: 4px; }
